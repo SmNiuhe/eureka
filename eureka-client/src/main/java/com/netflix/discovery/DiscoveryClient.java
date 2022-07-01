@@ -1300,6 +1300,8 @@ public class DiscoveryClient implements EurekaClient {
                 applicationInfoManager.registerStatusChangeListener(statusChangeListener);
             }
 
+            // 实际注册入口
+            // eureka client的服务注册，是在InstanceInfoReplicator中的
             instanceInfoReplicator.start(clientConfig.getInitialInstanceInfoReplicationIntervalSeconds());
         } else {
             logger.info("Not registering with Eureka server per configuration");

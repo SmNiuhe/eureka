@@ -81,6 +81,7 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
         this.password = localPassword;
     }
 
+    // 实际发送注册的 client
     @Override
     public EurekaHttpResponse<Void> register(InstanceInfo info) {
         String urlPath = "apps/" + info.getAppName();
