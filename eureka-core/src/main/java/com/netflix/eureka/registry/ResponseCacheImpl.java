@@ -350,6 +350,8 @@ public class ResponseCacheImpl implements ResponseCache {
      */
     @VisibleForTesting
     Value getValue(final Key key, boolean useReadOnlyCache) {
+        // 多级缓冲来获取所有应用信息
+        // readOnlyCache -> readWriteCache -> registry
         Value payload = null;
         try {
             if (useReadOnlyCache) {
