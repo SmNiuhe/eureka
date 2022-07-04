@@ -60,6 +60,7 @@ public class Lease<T> {
      * {@link #DEFAULT_DURATION_IN_SECS}.
      */
     public void renew() {
+        // 心跳续约，默认是当前时间+90s后过期
         lastUpdateTimestamp = System.currentTimeMillis() + duration;
 
     }
