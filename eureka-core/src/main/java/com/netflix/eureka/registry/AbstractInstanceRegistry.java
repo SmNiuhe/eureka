@@ -304,6 +304,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             Map<String, Lease<InstanceInfo>> gMap = registry.get(appName);
             Lease<InstanceInfo> leaseToCancel = null;
             if (gMap != null) {
+                // 服务下线，会将eureka-server 服务本地服务注册表的该服务实例进行移除
                 leaseToCancel = gMap.remove(id);
             }
             recentCanceledQueue.add(new Pair<Long, String>(System.currentTimeMillis(), appName + "(" + id + ")"));
@@ -320,6 +321,12 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 InstanceInfo instanceInfo = leaseToCancel.getHolder();
                 String vip = null;
                 String svip = null;
+                // 更新当前服务实例的操作类型，标记为删除状态
+                // 将取消续约的服务实例放入到最近变更的Queue中
+                // 主动过期掉缓存，即清空 readWriteCacheMap 该实例的缓存数据
+                // 后续 eurekaClient 在拉取增量服务实例的时候，会比较两边的服务hashCode是否一致，如果发现不一致，会重新拉取新的注册表，同样走的多级缓存
+                // readOnlyCacheMap 也有个定时任务30秒进行同步 readWriteCacheMap，此时同步继续同步成空的注册信息，
+                // 在 eurekaClient  定时拉取的时候走多级缓存策略，发现缓存没有的话，会进行走全量注册表数据，同步写入多级缓存
                 if (instanceInfo != null) {
                     instanceInfo.setActionType(ActionType.DELETED);
                     recentlyChangedQueue.add(new RecentlyChangedItem(leaseToCancel));
