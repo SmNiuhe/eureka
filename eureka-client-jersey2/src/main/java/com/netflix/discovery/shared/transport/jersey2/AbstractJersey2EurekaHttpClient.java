@@ -253,6 +253,7 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
         Response response = null;
         try {
             // 全量拉取注册表实际会通过 Jersey2 调用 restful api  http://localhost:8080/v2/apps
+            // 增量拉取注册表也会这这里， http://localhost:8080/v2/apps/delta
             // 通过 GET 请求
             WebTarget webTarget = jerseyClient.target(serviceUrl).path(urlPath);
             if (regions != null && regions.length > 0) {
