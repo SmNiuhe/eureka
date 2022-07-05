@@ -391,6 +391,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
                 }
             }
+
+            // 每次心跳续约，累计最近一分钟的心跳次数
             renewsLastMin.increment();
             leaseToRenew.renew();
             return true;
@@ -596,6 +598,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     public void evict(long additionalLeaseMs) {
         logger.debug("Running the evict task");
 
+        // 自我保护相关
         if (!isLeaseExpirationEnabled()) {
             logger.debug("DS: lease expiration is currently disabled.");
             return;
@@ -1200,6 +1203,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     }
 
     protected void updateRenewsPerMinThreshold() {
+        // Eureka 后续版本已经修改之前的bug，期望发送心跳的实例数量 * (60 秒/预期的实例心跳间隔 x 秒) * 0.85
+        // 在 register,cancel 的时候  expectedNumberOfClientsSendingRenews +1, -1 进行更新，同时重新计算每分钟期望心跳次数
         this.numberOfRenewsPerMinThreshold = (int) (this.expectedNumberOfClientsSendingRenews
                 * (60.0 / serverConfig.getExpectedClientRenewalIntervalSeconds())
                 * serverConfig.getRenewalPercentThreshold());
@@ -1224,6 +1229,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     }
 
     protected void postInit() {
+        // EurekaServer 服务启动阶段，调用该初始化方法
+        // TimerTask 60分钟统计一次心跳次数，lastBucket.set(currentBucket.getAndSet(0))
         renewsLastMin.start();
         if (evictionTaskRef.get() != null) {
             evictionTaskRef.get().cancel();
