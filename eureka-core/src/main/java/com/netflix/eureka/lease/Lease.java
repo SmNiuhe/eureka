@@ -109,6 +109,11 @@ public class Lease<T> {
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
     public boolean isExpired(long additionalLeaseMs) {
+        // 60s EvictionTask 执行一次
+        // lastUpdateTimestamp = 20:00:00
+        // duration = 90s
+        // additionalLeaseMs(补偿时间) 忽略不计
+        // 如果已经更新了驱逐时间戳则为过期，或者 当前时间 > 最近一次心跳时间 + 90s 间隔时间 + 补充时间
         return (evictionTimestamp > 0 || System.currentTimeMillis() > (lastUpdateTimestamp + duration + additionalLeaseMs));
     }
 
