@@ -83,6 +83,7 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
 
     @Override
     public EurekaHttpResponse<Void> register(InstanceInfo info) {
+        // http://locahost:8080/v2/apps/serverA => ApplicationsResource
         String urlPath = "apps/" + info.getAppName();
         Response response = null;
         try {

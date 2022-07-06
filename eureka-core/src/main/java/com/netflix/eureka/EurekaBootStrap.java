@@ -161,7 +161,8 @@ public class EurekaBootStrap implements ServletContextListener {
             EurekaInstanceConfig instanceConfig = isCloud(ConfigurationManager.getDeploymentContext())
                     ? new CloudInstanceConfig()
                     : new MyDataCenterInstanceConfig();
-            
+
+            // applicationInfoManager = (EurekaInstanceConfig config, InstanceInfo instanceInfo)
             applicationInfoManager = new ApplicationInfoManager(
                     instanceConfig, new EurekaConfigBasedInstanceInfoProvider(instanceConfig).get());
             
@@ -190,6 +191,7 @@ public class EurekaBootStrap implements ServletContextListener {
             );
         }
 
+        // 管理 Eureka集群节点 Helper 类
         PeerEurekaNodes peerEurekaNodes = getPeerEurekaNodes(
                 registry,
                 eurekaServerConfig,

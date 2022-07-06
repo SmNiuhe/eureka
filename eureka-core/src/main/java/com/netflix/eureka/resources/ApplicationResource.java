@@ -183,6 +183,7 @@ public class ApplicationResource {
             }
         }
 
+        // x-netflix-discovery-replication Head参数配置是否是复制
         registry.register(info, "true".equals(isReplication));
         return Response.status(204).build();  // 204 to be backwards compatible
     }

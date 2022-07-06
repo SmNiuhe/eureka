@@ -84,6 +84,9 @@ public class PeerEurekaNodes {
                 }
         );
         try {
+            // 解析配置文件中的其他eureka server的url地址，基于url地址构造一个一个的PeerEurekaNode，
+            // 一个PeerEurekaNode就代表了一个eureka server。启动一个后台的线程，默认是每隔10分钟，会运行一个任务，
+            // 就是基于配置文件中的url来刷新eureka server列表。
             updatePeerEurekaNodes(resolvePeerUrls());
             Runnable peersUpdateTask = new Runnable() {
                 @Override
@@ -128,6 +131,8 @@ public class PeerEurekaNodes {
      * @return peer URLs with node's own URL filtered out
      */
     protected List<String> resolvePeerUrls() {
+        // eurekaProperties eurekaServer 互相注册地址配置
+        // eureka.client.serviceUrl.defaultZone: http://peer2:8762/eureka/,http://peer2:8763/eureka/
         InstanceInfo myInfo = applicationInfoManager.getInfo();
         String zone = InstanceInfo.getZone(clientConfig.getAvailabilityZones(clientConfig.getRegion()), myInfo);
         List<String> replicaUrls = EndpointUtils
@@ -156,6 +161,7 @@ public class PeerEurekaNodes {
             return;
         }
 
+        // 解析注册的服务集群参数，动态更新Eureka集群节点信息
         Set<String> toShutdown = new HashSet<>(peerEurekaNodeUrls);
         toShutdown.removeAll(newPeerUrls);
         Set<String> toAdd = new HashSet<>(newPeerUrls);
