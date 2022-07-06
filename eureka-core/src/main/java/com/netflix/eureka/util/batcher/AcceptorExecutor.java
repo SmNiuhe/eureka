@@ -196,8 +196,9 @@ class AcceptorExecutor<ID, T> {
                     }
                     if (scheduleTime <= now) {
 
-                        // Acceptor -> work ->
-                        // acceptorQueue -> batchWorkQueue
+                        // 一定时间内的任务进行批处理分发
+                        // AcceptorExecutor -> TaskDispatchers -> TaskExecutors
+                        // acceptorQueue/reprocessQueue -> batchWorkQueue
                         // 三个队列进行数据的批处理
                         assignBatchWork();
                         assignSingleItemWork();
