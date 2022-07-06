@@ -195,6 +195,10 @@ class AcceptorExecutor<ID, T> {
                         scheduleTime = now + trafficShaper.transmissionDelay();
                     }
                     if (scheduleTime <= now) {
+
+                        // Acceptor -> work ->
+                        // acceptorQueue -> batchWorkQueue
+                        // 三个队列进行数据的批处理
                         assignBatchWork();
                         assignSingleItemWork();
                     }
