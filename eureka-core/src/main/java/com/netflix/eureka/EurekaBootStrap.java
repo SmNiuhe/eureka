@@ -128,6 +128,7 @@ public class EurekaBootStrap implements ServletContextListener {
     protected void initEurekaEnvironment() throws Exception {
         logger.info("Setting the eureka configuration..");
 
+        // 经典的单例模式 double check + volatile。
         String dataCenter = ConfigurationManager.getConfigInstance().getString(EUREKA_DATACENTER);
         if (dataCenter == null) {
             logger.info("Eureka data center value eureka.datacenter is not set, defaulting to default");
@@ -146,7 +147,7 @@ public class EurekaBootStrap implements ServletContextListener {
      * init hook for server context. Override for custom logic.
      */
     protected void initEurekaServerContext() throws Exception {
-        // 第一步，加载 eureka-server Properties 配置
+        // 第一步，加载 eureka-server Properties 文件配置
         EurekaServerConfig eurekaServerConfig = new DefaultEurekaServerConfig();
 
         // For backward compatibility
@@ -222,6 +223,7 @@ public class EurekaBootStrap implements ServletContextListener {
         // 第七步，处理一点善后的事情，从相邻的eureka节点拷贝注册信息
         // Copy registry from neighboring eureka node
         int registryCount = registry.syncUp();
+        // 服务实例的自动故障感知和摘除机制
         registry.openForTraffic(applicationInfoManager, registryCount);
 
         // 第八步，注册所有的监控信息

@@ -478,10 +478,16 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
 
     @Override
     public boolean isLeaseExpirationEnabled() {
+        // 是否启用了自我保护模式
         if (!isSelfPreservationModeEnabled()) {
             // The self preservation mode is disabled, hence allowing the instances to expire.
             return true;
         }
+        // 期望每分钟续约的实例数据>0 并且 最近每分钟续约的实例数量大于期望的实例数据
+        // this.numberOfRenewsPerMinThreshold = (int) ((count * 2) * serverConfig.getRenewalPercentThreshold());
+        // numberOfRenewsPerMinThreshold = (count*2) * 0.85
+        // 如果出现大规模的服务实例没有续约，此时自我保护机制是开启的
+        // 20个服务实例，只有 < 17服务实例出现没有续约，直接开启自我保护机制，不会摘除服务
         return numberOfRenewsPerMinThreshold > 0 && getNumOfRenewsInLastMin() > numberOfRenewsPerMinThreshold;
     }
 

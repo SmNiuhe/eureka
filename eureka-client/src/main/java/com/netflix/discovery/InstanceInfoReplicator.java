@@ -60,6 +60,7 @@ class InstanceInfoReplicator implements Runnable {
     }
 
     public void start(int initialDelayMs) {
+        // 服务注册 instanceInfoReplicator 自身是个Runnable，连蒙带猜直接查看 run 方法，一定做了服务实例注册
         if (started.compareAndSet(false, true)) {
             instanceInfo.setIsDirty();  // for initial register
             Future next = scheduler.schedule(this, initialDelayMs, TimeUnit.SECONDS);
@@ -106,6 +107,7 @@ class InstanceInfoReplicator implements Runnable {
 
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
+                // 实际注册时机
                 discoveryClient.register();
                 instanceInfo.unsetIsDirty(dirtyTimestamp);
             }

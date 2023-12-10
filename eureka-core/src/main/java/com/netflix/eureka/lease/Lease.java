@@ -108,6 +108,13 @@ public class Lease<T> {
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
     public boolean isExpired(long additionalLeaseMs) {
+        // duration = 90
+        // additionalLeaseMs = 正常是0，如果出现task调度延迟，或者心跳延迟都是补偿时间
+        // lastUpdateTimestamp = 续约时间+duration(lastUpdateTimestamp = System.currentTimeMillis() + duration;)
+        // 如果上一次续约时间是 20:00:00 + duration + duration + 0   20:03:00
+        // 如果当前时间正好是20:03:00，此时也是不会过期的，这个就会出现个问题，需要要等下一次定时任务，此时
+        // 20:01:30 + 60 =  20:02:30 此时是会过期
+        // 如果出现极端情况此时续约时间是  20:00:00 + duration + duration + 2   20:01:32
         return (evictionTimestamp > 0 || System.currentTimeMillis() > (lastUpdateTimestamp + duration + additionalLeaseMs));
     }
 

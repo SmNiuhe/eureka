@@ -129,6 +129,7 @@ public class ResponseCacheImpl implements ResponseCache {
         long responseCacheUpdateIntervalMs = serverConfig.getResponseCacheUpdateIntervalMs();
         this.readWriteCacheMap =
                 CacheBuilder.newBuilder().initialCapacity(1000)
+                        // 180s readWriteCacheMap 从注册表同步信息
                         .expireAfterWrite(serverConfig.getResponseCacheAutoExpirationInSeconds(), TimeUnit.SECONDS)
                         .removalListener(new RemovalListener<Key, Value>() {
                             @Override
@@ -147,12 +148,14 @@ public class ResponseCacheImpl implements ResponseCache {
                                     Key cloneWithNoRegions = key.cloneWithoutRegions();
                                     regionSpecificKeys.put(cloneWithNoRegions, key);
                                 }
+                                // 180s readWriteCacheMap 从注册表同步信息
                                 Value value = generatePayload(key);
                                 return value;
                             }
                         });
 
         if (shouldUseReadOnlyResponseCache) {
+            // readOnlyCacheMap 30s定时同步 readWriteCacheMap 信息，先进行比对如果发生变化直接同步
             timer.schedule(getCacheUpdateTask(),
                     new Date(((System.currentTimeMillis() / responseCacheUpdateIntervalMs) * responseCacheUpdateIntervalMs)
                             + responseCacheUpdateIntervalMs),
@@ -177,6 +180,7 @@ public class ResponseCacheImpl implements ResponseCache {
                         logger.debug("Updating the client cache from response cache for key : {} {} {} {}", args);
                     }
                     try {
+                        // readOnlyCacheMap 30s定时同步 readWriteCacheMap 信息，先进行比对如果发生变化直接同步
                         CurrentRequestVersion.set(key.getVersion());
                         Value cacheValue = readWriteCacheMap.get(key);
                         Value currentCacheValue = readOnlyCacheMap.get(key);
@@ -270,7 +274,8 @@ public class ResponseCacheImpl implements ResponseCache {
         for (Key key : keys) {
             logger.debug("Invalidating the response cache key : {} {} {} {}, {}",
                     key.getEntityType(), key.getName(), key.getVersion(), key.getType(), key.getEurekaAccept());
-
+            // 读写缓存失效所有注册实例的缓存信息
+            // 保证后续只读缓存同步的时候，拿不到，只读缓存也被清空，重新从 recentChangedQueue 拉去增量注册信息
             readWriteCacheMap.invalidate(key);
             Collection<Key> keysWithRegions = regionSpecificKeys.get(key);
             if (null != keysWithRegions && !keysWithRegions.isEmpty()) {
@@ -341,7 +346,8 @@ public class ResponseCacheImpl implements ResponseCache {
      * Get the payload in both compressed and uncompressed form.
      */
     @VisibleForTesting
-    Value getValue(final Key key, boolean useReadOnlyCache) {
+    Value                          getValue(final Key key, boolean useReadOnlyCache) {
+        // TODO 多级缓存策略
         Value payload = null;
         try {
             if (useReadOnlyCache) {

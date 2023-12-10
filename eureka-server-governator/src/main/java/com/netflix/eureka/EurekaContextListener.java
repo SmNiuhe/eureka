@@ -32,6 +32,7 @@ public class EurekaContextListener extends GovernatorServletContextListener {
     }
 
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
+
         EurekaMonitors.shutdown();
 
         ServletContext sc = servletContextEvent.getServletContext();
