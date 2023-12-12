@@ -207,6 +207,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         // Copy entire entry from neighboring DS node
         int count = 0;
 
+        // 重试5次，每次重试间隔30s
         for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
             if (i > 0) {
                 try {
@@ -216,11 +217,15 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                     break;
                 }
             }
+            // eureka server 本身也是 eureka client，在实例DiscoveryClient对象的时候就会去eureka Server去拉取一份注册表
+            // 从其他eureka server服务中拉取注册表
             Applications apps = eurekaClient.getApplications();
             for (Application app : apps.getRegisteredApplications()) {
                 for (InstanceInfo instance : app.getInstances()) {
                     try {
+                        // 检查当前实例是否是合规注册的
                         if (isRegisterable(instance)) {
+                            // 将拉取到的注册表实例进行本地注册
                             register(instance, instance.getLeaseInfo().getDurationInSecs(), true);
                             count++;
                         }
@@ -408,6 +413,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             leaseDuration = info.getLeaseInfo().getDurationInSecs();
         }
         super.register(info, leaseDuration, isReplication);
+        // 本地服务注册完后，同步到其他服务集群中
         replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication);
     }
 
@@ -630,6 +636,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                 numberOfReplicationsLastMin.increment();
             }
             // If it is a replication already, do not replicate again as this will create a poison replication
+            // 如果是eurekaClient服务实例注册，那么此时 isReplication一定是false
+            // 会调用 replicateInstanceActionsToPeers 方法同步所有的操作行为给其他服务集群
+            // 此时走的 Jersey2ReplicationClient，会携带 isReplication为true，当其他服务集群进行注册同步的时候，不会再通知其他节点
             if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) {
                 return;
             }
